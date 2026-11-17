@@ -10,6 +10,15 @@ Cybersecurity Incident Reporting & Tracking System. Incident intake, classificat
 
 The checked-in-ignored local `.env` enables `DEMO_MODE=true`: the dashboard signs in to the API automatically and reads/writes demo incidents through authenticated REST routes. Demo data is held in API memory and resets when the API restarts. For MySQL persistence, install MySQL 8+, run `mysql -u root -p < database/schema.sql`, configure `.env` from `.env.example` with `DEMO_MODE=false`, a strong `JWT_SECRET`, and database credentials. The production login route uses bcryptjs password hashes; provision user accounts through a controlled admin workflow.
 
+### Demo accounts (DEMO_MODE=true)
+
+- `alex.admin@northstar.local` — Administrator
+- `maya.analyst@northstar.local` — Security analyst
+- `ethan.reporter@northstar.local` — Incident reporter
+- `priya.viewer@northstar.local` — Read-only viewer
+
+Password for every demo account: `demo1234`. The sign-in screen also offers one-click demo role buttons.
+
 ## Deploy to Render
 
 The `render.yaml` blueprint builds the React frontend and serves it with the Express API as one web service. In Render, create a new Blueprint from this repository and deploy it with the generated `JWT_SECRET` and `DEMO_MODE=true` defaults. The free instance may sleep when idle, and demo incidents are in memory, so changes to demo data reset when the service restarts. AI agent features require setting `OPENAI_API_KEY` in the Render service environment.
@@ -28,7 +37,9 @@ The `render.yaml` blueprint builds the React frontend and serves it with the Exp
 3. **Threat intelligence** — correlate historical attacks and MITRE ATT&CK techniques.
 4. **Risk analysis & reporting** — prioritize exposure and produce incident PDF briefings.
 
-Each agent card sends the selected incident and target input to the OpenAI Responses API and returns structured findings in the UI. Set `OPENAI_API_KEY` in the ignored local `.env`; `OPENAI_MODEL` can select an available model. The OSINT, vulnerability, and threat-intelligence agents use the Responses API web search tool for public research. Private/internal targets are excluded from web search. Risk reporting uses the model without web search.
+Each agent card sends the selected incident and target input to the OpenAI Responses API and returns structured findings in the UI. Set `OPENAI_API_KEY` in the ignored local `.env`; `OPENAI_MODEL` can select an available model (default `gpt-4o-mini`). The OSINT, vulnerability, and threat-intelligence agents use the Responses API web search tool for public research. Private/internal targets are excluded from web search. Risk reporting uses the model without web search.
+
+When no `OPENAI_API_KEY` is configured, agent runs fall back to a local heuristic analysis built from the incident record only (clearly labeled in the result, no external lookups) so the workflow stays usable offline.
 
 - **OSINT collection** researches the user-entered public domain/IP with passive public sources. It does not probe or scan the target.
 - **Vulnerability assessment** researches supplied product/version details against public sources and reports CVE/CVSS findings with sources; missing evidence is called out.

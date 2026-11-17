@@ -41,11 +41,72 @@ function outputText(response) {
   return '';
 }
 
+const severityScores = { Critical: 92, High: 78, Medium: 55, Low: 30 };
+const severityTiers = { Critical: 'Severe', High: 'Elevated', Medium: 'Moderate', Low: 'Low' };
+const categoryTechniques = {
+  'Identity & access': [{ id: 'T1110', name: 'Brute Force', url: 'https://attack.mitre.org/techniques/T1110/' }, { id: 'T1078', name: 'Valid Accounts', url: 'https://attack.mitre.org/techniques/T1078/' }],
+  'Email security': [{ id: 'T1566', name: 'Phishing', url: 'https://attack.mitre.org/techniques/T1566/' }, { id: 'T1204', name: 'User Execution', url: 'https://attack.mitre.org/techniques/T1204/' }],
+  Network: [{ id: 'T1071', name: 'Application Layer Protocol', url: 'https://attack.mitre.org/techniques/T1071/' }, { id: 'T1041', name: 'Exfiltration Over C2 Channel', url: 'https://attack.mitre.org/techniques/T1041/' }],
+  Vulnerability: [{ id: 'T1190', name: 'Exploit Public-Facing Application', url: 'https://attack.mitre.org/techniques/T1190/' }],
+  'Cloud security': [{ id: 'T1530', name: 'Data from Cloud Storage', url: 'https://attack.mitre.org/techniques/T1530/' }],
+};
+const agentFindings = {
+  'osint-collection': (incident, target) => [
+    { severity: incident.severity, title: 'Passive scope of the entered target', detail: `Local review of the incident record for target “${target}”. No external probing or scanning was performed; run with an OPENAI_API_KEY for live public-source research.`, sourceUrl: '' },
+    { severity: 'Info', title: 'Authorization reminder', detail: 'Only use targets you are authorized to assess. OSINT with an API key uses passive public sources and excludes private/internal assets.', sourceUrl: '' },
+  ],
+  'vulnerability-assessment': incident => [
+    { severity: incident.severity, title: 'Severity triage from the incident record', detail: `The incident “${incident.title}” is recorded as ${incident.severity}. Confirm the exact product and version in the incident details to map findings to CVE/CVSS data.`, sourceUrl: '' },
+    { severity: 'Info', title: 'CVE lookup requires product evidence', detail: 'No CVE identifiers are invented without vendor/NVD evidence. Add OPENAI_API_KEY to research the supplied product and version against authoritative sources.', sourceUrl: '' },
+  ],
+  'threat-intelligence': incident => [
+    { severity: incident.severity, title: 'Behavior mapping for this incident', detail: `Behaviors described in “${incident.title}” (${incident.category || 'general security'}) suggest the ATT&CK techniques listed below. This mapping is a hypothesis, not attribution.`, sourceUrl: '' },
+  ],
+  'risk-analysis-reporting': incident => [
+    { severity: incident.severity, title: 'Primary risk driver', detail: `The recorded ${incident.severity.toLowerCase()} severity and “${incident.status}” status are the main drivers of the preliminary risk score. Missing context increases uncertainty.`, sourceUrl: '' },
+    { severity: 'Info', title: 'Analyst review required', detail: 'Treat this local assessment as a starting point for triage, not as confirmed impact.', sourceUrl: '' },
+  ],
+};
+const agentRecommendations = {
+  'osint-collection': ['Confirm you are authorized to assess the entered target.', 'Record the target and scope in the incident notes.', 'Add OPENAI_API_KEY to .env for live passive public-source research.'],
+  'vulnerability-assessment': ['Capture the exact product name and version from the affected asset.', 'Check vendor advisories for the recorded product.', 'Patch or mitigate confirmed vulnerabilities and re-test.'],
+  'threat-intelligence': ['Correlate the listed techniques with your detection coverage.', 'Hunt for the described behaviors in logs from the affected asset.', 'Escalate to the threat intelligence team for attribution work.'],
+  'risk-analysis-reporting': ['Verify the incident details with the reporter.', 'Prioritize containment steps for the affected asset.', 'Keep the incident record updated as the response progresses.'],
+};
+const missingByAgent = {
+  'osint-collection': ['Confirmation that the target is a public asset you are authorized to assess.', 'OPENAI_API_KEY for live public-source research.'],
+  'vulnerability-assessment': ['Exact product name and version for CVE mapping.', 'OPENAI_API_KEY for authoritative CVE/CVSS research.'],
+  'threat-intelligence': ['Log evidence confirming the mapped behaviors.', 'OPENAI_API_KEY for historical campaign research.'],
+  'risk-analysis-reporting': ['Reporter confirmation of the incident timeline.', 'Business impact context for the affected asset.'],
+};
+
+function localAgentResult(agent, incident, target) {
+  const profile = profiles[agent];
+  const score = severityScores[incident.severity] ?? 55;
+  return {
+    agent: profile.name,
+    title: `${profile.name}: ${incident.title}`,
+    summary: `Local heuristic analysis of ${incident.incident_key || incident.id} (${incident.severity} · ${incident.status}) for target “${target || 'unspecified'}”. No external research was performed; conclusions come only from the incident record. Analyst review is required.`,
+    findings: (agentFindings[agent] || agentFindings['risk-analysis-reporting'])(incident, target),
+    recommendations: agentRecommendations[agent] || agentRecommendations['risk-analysis-reporting'],
+    missingData: missingByAgent[agent] || [],
+    riskScore: score,
+    riskTier: severityTiers[incident.severity] ?? 'Moderate',
+    confidence: 'Heuristic — derived from the incident record only',
+    attribution: 'No actor attribution attempted without direct evidence.',
+    scope: 'Local analysis only. Incident details stay inside CyberShield; no external lookups were made.',
+    cves: [],
+    techniques: categoryTechniques[incident.category] || [],
+    createdAt: new Date().toISOString(),
+    method: 'Local heuristic analysis · no OPENAI_API_KEY configured (add one to .env for AI research and public-source lookups)',
+  };
+}
+
 export async function generateAgentResponse(agent, incident, target) {
   const profile = profiles[agent];
   if (!profile) throw new Error('Unknown agent.');
-  if (!process.env.OPENAI_API_KEY) throw new Error('AI_PROVIDER_NOT_CONFIGURED');
-  const model = process.env.OPENAI_MODEL || 'gpt-6-astra';
+  if (!process.env.OPENAI_API_KEY) return localAgentResult(agent, incident, target || incident.affected_asset || '');
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
   const suppliedTarget = target || incident.affected_asset || '';
   const canSearch = profile.web && !isPrivateTarget(suppliedTarget);
   const input = {
