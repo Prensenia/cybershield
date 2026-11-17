@@ -1,5 +1,7 @@
 # CyberShield
 
+![License: MIT](https://img.shields.io/badge/License-MIT-2fae8d) ![Node](https://img.shields.io/badge/Node-20%2B-339933) ![React](https://img.shields.io/badge/React-18-61dafb) ![AI agents](https://img.shields.io/badge/AI%20agents-6-7fb3f0)
+
 Cybersecurity Incident Reporting & Tracking System. Incident intake, classification, assignment, and response tracking form the core product; six optional agent modules enrich that workflow.
 
 ## Run locally
@@ -54,3 +56,14 @@ Incident details and the entered target are sent to OpenAI when an agent runs. P
 ## Database concepts
 
 The schema separates organizations, users, incidents, audit events, and agent runs. Incident sequences use a composite key per organization and year; report queries can use the status/severity and assignee indexes. Creation writes the incident and audit event in one transaction. MongoDB can be added as an optional document store for provider response snapshots; MySQL remains the source of truth.
+
+## Credits & acknowledgments
+
+- **Project & code** — CyberShield by [Prensenia](https://github.com/Prensenia), based on the original [cybershield](https://github.com/mehakcyberpro-web/cybershield) project by mehakcyberpro-web.
+- **Open-source libraries** — [React](https://react.dev), [Vite](https://vitejs.dev), [Redux Toolkit](https://redux-toolkit.js.org), [Express](https://expressjs.com), [mysql2](https://github.com/sidorares/node-mysql2), [bcryptjs](https://github.com/dcodeIO/bcrypt.js), [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken), and [lucide-react](https://lucide.dev) icons.
+- **Typography** — [DM Sans](https://fonts.google.com/specimen/DM+Sans) and [Manrope](https://fonts.google.com/specimen/Manrope) via Google Fonts.
+- **AI enrichment** — agent research uses the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) when an `OPENAI_API_KEY` is configured; without a key the agents run a clearly labeled local heuristic analysis.
+
+## License
+
+Released under the [MIT License](./LICENSE).
