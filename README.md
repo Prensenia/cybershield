@@ -1,6 +1,6 @@
 # CyberShield
 
-Cybersecurity Incident Reporting & Tracking System. Incident intake, classification, assignment, and response tracking form the core product; four optional agent modules enrich that workflow.
+Cybersecurity Incident Reporting & Tracking System. Incident intake, classification, assignment, and response tracking form the core product; six optional agent modules enrich that workflow.
 
 ## Run locally
 
@@ -36,6 +36,8 @@ The `render.yaml` blueprint builds the React frontend and serves it with the Exp
 2. **Vulnerability assessment** — map findings to CVEs and CVSS severity.
 3. **Threat intelligence** — correlate historical attacks and MITRE ATT&CK techniques.
 4. **Risk analysis & reporting** — prioritize exposure and produce incident PDF briefings.
+5. **Target reconnaissance** — classify the entered target (domain, public/private IP, internal host, URL) and map its passive attack surface: DNS, certificate transparency, known subdomains, and risky non-production hostnames. Adapts findings and risk scoring to the target type.
+6. **Network & exposure review** — perimeter-focused checks for the target: public reachability assumptions, category-specific controls (SPF/DKIM/DMARC for email, storage policies for cloud, MFA/conditional access for identity), and edge hardening steps.
 
 Each agent card sends the selected incident and target input to the OpenAI Responses API and returns structured findings in the UI. Set `OPENAI_API_KEY` in the ignored local `.env`; `OPENAI_MODEL` can select an available model (default `gpt-4o-mini`). The OSINT, vulnerability, and threat-intelligence agents use the Responses API web search tool for public research. Private/internal targets are excluded from web search. Risk reporting uses the model without web search.
 
@@ -45,6 +47,7 @@ When no `OPENAI_API_KEY` is configured, agent runs fall back to a local heuristi
 - **Vulnerability assessment** researches supplied product/version details against public sources and reports CVE/CVSS findings with sources; missing evidence is called out.
 - **Threat intelligence** researches historical context and suggests MITRE ATT&CK mappings with source links. Actor attribution requires direct evidence.
 - **Risk & reporting** evaluates the incident, explains risk drivers, suggests next steps, and opens a print-ready report that can be saved as PDF.
+- **Target reconnaissance** and **Network & exposure** are target-driven: they require the target input, classify it (domain, public IP, private/internal, URL), and tailor their findings and risk score to what was entered. Without an API key they still classify the target and produce the passive-surface checklist locally.
 
 Incident details and the entered target are sent to OpenAI when an agent runs. Public-source agents may also search public web sources. Do not enter credentials, secrets, or assets you are not authorized to assess. Keep analyst review in the loop.
 

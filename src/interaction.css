@@ -110,3 +110,7 @@ table.compact td{height:36px}
 .info-rows .menu-pop-action{margin-top:4px}
 .info-toggle label{display:inline-flex;align-items:center;gap:7px;margin-top:8px;color:#cdd8e4;font-size:9.5px;cursor:pointer}
 .info-toggle input{accent-color:#2fae8d}
+
+/* --- New agent icon colors (recon / exposure) --- */
+.agent-icon.blue{color:#7fb3f0;background:#1b2b41}
+.agent-icon.red{color:#ef8a95;background:#3a2027}
