@@ -68,4 +68,5 @@ app.get('*', (req, res, next) => {
 });
 app.use((err, _req, res, _next) => { console.error(err); res.status(err.status || 500).json({ error: err.status ? err.message : 'Internal server error' }); });
 const port = Number(process.env.PORT || 4000);
-app.listen(port, () => console.log(`CyberShield listening on ${port} (${demoMode ? 'demo-memory' : 'mysql'} mode)`));
+if (!process.env.VERCEL) app.listen(port, () => console.log(`CyberShield listening on ${port} (${demoMode ? 'demo-memory' : 'mysql'} mode)`));
+export default app;
