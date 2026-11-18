@@ -49,7 +49,7 @@ When no `OPENAI_API_KEY` is configured, agent runs fall back to a local heuristi
 - **Vulnerability assessment** researches supplied product/version details against public sources and reports CVE/CVSS findings with sources; missing evidence is called out.
 - **Threat intelligence** researches historical context and suggests MITRE ATT&CK mappings with source links. Actor attribution requires direct evidence.
 - **Risk & reporting** evaluates the incident, explains risk drivers, suggests next steps, and opens a print-ready report that can be saved as PDF.
-- **Target reconnaissance** and **Network & exposure** are target-driven: they require the target input, classify it (domain, public IP, private/internal, URL), and tailor their findings and risk score to what was entered. Without an API key they still classify the target and produce the passive-surface checklist locally.
+- **Target reconnaissance** and **Network & exposure** are target-driven: they read the target input and classify it (domain, public IP, private/internal, URL), then tailor their findings and risk score to what was entered. If the target field is left empty they fall back to the incident's own asset, so every agent is runnable in demo mode. Without an API key they still classify the target and produce the passive-surface checklist locally.
 
 Incident details and the entered target are sent to OpenAI when an agent runs. Public-source agents may also search public web sources. Do not enter credentials, secrets, or assets you are not authorized to assess. Keep analyst review in the loop.
 
